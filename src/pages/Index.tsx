@@ -133,10 +133,10 @@ const Index = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {topStreamers.map((streamer, index) => (
-              <Card
-                key={streamer.id}
-                className="group overflow-hidden border-border hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary/20 cursor-pointer relative"
-              >
+              <Link key={streamer.id} to={`/streamer/${streamer.id}`}>
+                <Card
+                  className="group overflow-hidden border-border hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary/20 cursor-pointer relative"
+                >
                 <div className="absolute top-3 left-3 z-10">
                   <Badge className="bg-gradient-to-r from-primary to-secondary text-white border-0 font-semibold">
                     #{index + 1} ТОП
@@ -186,6 +186,7 @@ const Index = () => {
                   </div>
                 </CardContent>
               </Card>
+              </Link>
             ))}
           </div>
         </section>
@@ -207,10 +208,10 @@ const Index = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {allStreams.map((streamer) => (
-              <Card
-                key={streamer.id}
-                className="group overflow-hidden border-border hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 cursor-pointer"
-              >
+              <Link key={streamer.id} to={`/streamer/${streamer.id}`}>
+                <Card
+                  className="group overflow-hidden border-border hover:border-primary/50 transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 cursor-pointer"
+                >
                 <div className="aspect-video relative overflow-hidden">
                   <img
                     src={streamer.avatar}
@@ -247,6 +248,7 @@ const Index = () => {
                   </div>
                 </CardContent>
               </Card>
+              </Link>
             ))}
           </div>
         </section>

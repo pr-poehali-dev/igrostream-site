@@ -1,14 +1,19 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useToast } from '@/hooks/use-toast';
 import Icon from '@/components/ui/icon';
 
 const StreamerProfile = () => {
   const { id } = useParams();
+  const { toast } = useToast();
   const [isFollowing, setIsFollowing] = useState(false);
+  const [followerCount, setFollowerCount] = useState(0);
+  const [avatar, setAvatar] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const streamerData: Record<string, any> = {
     '1': {
@@ -53,6 +58,42 @@ const StreamerProfile = () => {
   };
 
   const streamer = streamerData[id || '1'];
+  
+  if (followerCount === 0) {
+    setFollowerCount(streamer.followers);
+  }
+  
+  if (avatar === '') {
+    setAvatar(streamer.avatar);
+  }
+  
+  const handleFollowToggle = () => {
+    const newFollowState = !isFollowing;
+    setIsFollowing(newFollowState);
+    setFollowerCount(prev => newFollowState ? prev + 1 : prev - 1);
+    
+    toast({
+      title: newFollowState ? 'Подписка оформлена!' : 'Вы отписались',
+      description: newFollowState 
+        ? `Теперь вы подписаны на ${streamer.name}` 
+        : `Вы отписались от ${streamer.name}`,
+    });
+  };
+  
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatar(reader.result as string);
+        toast({
+          title: 'Аватар обновлён!',
+          description: 'Ваш новый аватар успешно загружен',
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const clips = [
     {
@@ -125,14 +166,30 @@ const StreamerProfile = () => {
         <div className="container mx-auto px-4">
           <div className="relative -mt-20 md:-mt-24">
             <div className="flex flex-col md:flex-row gap-6 items-start md:items-end">
-              <div className="relative">
+              <div className="relative group">
                 <div className="w-32 h-32 md:w-40 md:h-40 rounded-2xl border-4 border-background overflow-hidden bg-gradient-to-br from-primary to-secondary">
                   <img
-                    src={streamer.avatar}
+                    src={avatar}
                     alt={streamer.name}
                     className="w-full h-full object-cover"
                   />
                 </div>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="absolute inset-0 bg-black/60 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <div className="text-center">
+                    <Icon name="Camera" className="text-white mx-auto mb-2" size={32} />
+                    <span className="text-white text-sm font-medium">Изменить аватар</span>
+                  </div>
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarChange}
+                  className="hidden"
+                />
                 {streamer.isLive && (
                   <Badge variant="destructive" className="absolute -top-2 -right-2 gap-1.5">
                     <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
@@ -159,7 +216,7 @@ const StreamerProfile = () => {
                     <Button
                       size="lg"
                       variant={isFollowing ? 'outline' : 'default'}
-                      onClick={() => setIsFollowing(!isFollowing)}
+                      onClick={handleFollowToggle}
                       className={!isFollowing ? 'bg-gradient-to-r from-primary to-secondary hover:opacity-90' : ''}
                     >
                       <Icon name={isFollowing ? 'Check' : 'UserPlus'} size={20} className="mr-2" />
@@ -177,7 +234,7 @@ const StreamerProfile = () => {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
                   <Card className="bg-card/50">
                     <CardContent className="p-4 text-center">
-                      <div className="text-2xl font-bold text-primary">{streamer.followers.toLocaleString()}</div>
+                      <div className="text-2xl font-bold text-primary">{followerCount.toLocaleString()}</div>
                       <div className="text-sm text-muted-foreground">Подписчиков</div>
                     </CardContent>
                   </Card>
