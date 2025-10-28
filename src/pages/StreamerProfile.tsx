@@ -16,8 +16,11 @@ const StreamerProfile = () => {
   const [avatar, setAvatar] = useState('');
   const [nickname, setNickname] = useState('');
   const [isEditingNickname, setIsEditingNickname] = useState(false);
+  const [chatMessages, setChatMessages] = useState<Array<{id: number, user: string, message: string, time: string}>>([]);
+  const [newMessage, setNewMessage] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const nicknameInputRef = useRef<HTMLInputElement>(null);
+  const chatEndRef = useRef<HTMLDivElement>(null);
 
   const streamerData: Record<string, any> = {
     '1': {
@@ -75,6 +78,15 @@ const StreamerProfile = () => {
     setNickname(streamer.name);
   }
   
+  if (chatMessages.length === 0) {
+    setChatMessages([
+      { id: 1, user: 'Viewer123', message: 'Привет всем! 👋', time: '18:23' },
+      { id: 2, user: 'ProPlayer', message: 'Отличная игра!', time: '18:24' },
+      { id: 3, user: 'StreamFan', message: 'Когда следующий стрим?', time: '18:25' },
+      { id: 4, user: 'GamerX', message: 'Лучший стример! 🔥', time: '18:26' },
+    ]);
+  }
+  
   const handleFollowToggle = () => {
     const newFollowState = !isFollowing;
     setIsFollowing(newFollowState);
@@ -124,6 +136,32 @@ const StreamerProfile = () => {
     } else if (e.key === 'Escape') {
       setNickname(streamer.name);
       setIsEditingNickname(false);
+    }
+  };
+  
+  const handleSendMessage = () => {
+    if (newMessage.trim()) {
+      const now = new Date();
+      const time = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+      
+      setChatMessages(prev => [
+        ...prev,
+        {
+          id: Date.now(),
+          user: nickname,
+          message: newMessage,
+          time: time
+        }
+      ]);
+      
+      setNewMessage('');
+      setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+    }
+  };
+  
+  const handleMessageKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSendMessage();
     }
   };
 
@@ -350,47 +388,92 @@ const StreamerProfile = () => {
           </TabsList>
 
           <TabsContent value="stream" className="space-y-6">
-            <Card className="overflow-hidden">
-              <div className="aspect-video bg-muted flex items-center justify-center">
-                <div className="text-center">
-                  {streamer.isLive ? (
-                    <div className="space-y-4">
-                      <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
-                        <Icon name="Play" className="text-white" size={40} />
-                      </div>
-                      <div>
-                        <div className="text-2xl font-bold mb-2">Трансляция идёт!</div>
-                        <Badge variant="destructive" className="gap-1.5">
-                          <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
-                          {streamer.viewers.toLocaleString()} зрителей
-                        </Badge>
-                      </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-2">
+                <Card className="overflow-hidden">
+                  <div className="aspect-video bg-muted flex items-center justify-center">
+                    <div className="text-center">
+                      {streamer.isLive ? (
+                        <div className="space-y-4">
+                          <div className="w-20 h-20 mx-auto rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center">
+                            <Icon name="Play" className="text-white" size={40} />
+                          </div>
+                          <div>
+                            <div className="text-2xl font-bold mb-2">Трансляция идёт!</div>
+                            <Badge variant="destructive" className="gap-1.5">
+                              <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
+                              {streamer.viewers.toLocaleString()} зрителей
+                            </Badge>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          <Icon name="VideoOff" className="text-muted-foreground mx-auto" size={64} />
+                          <div className="text-xl text-muted-foreground">Стрим не активен</div>
+                        </div>
+                      )}
                     </div>
-                  ) : (
-                    <div className="space-y-4">
-                      <Icon name="VideoOff" className="text-muted-foreground mx-auto" size={64} />
-                      <div className="text-xl text-muted-foreground">Стрим не активен</div>
-                    </div>
-                  )}
-                </div>
+                  </div>
+                  <CardContent className="p-4">
+                    <h3 className="font-semibold text-lg mb-2">{streamer.game}</h3>
+                    <p className="text-muted-foreground text-sm">Стримим и общаемся с чатом</p>
+                  </CardContent>
+                </Card>
               </div>
-              <CardContent className="p-4">
-                <h3 className="font-semibold text-lg mb-2">{streamer.game}</h3>
-                <p className="text-muted-foreground text-sm">Стримим и общаемся с чатом</p>
-              </CardContent>
-            </Card>
 
-            <Card>
-              <CardContent className="p-6">
-                <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
-                  <Icon name="MessageSquare" size={20} className="text-primary" />
-                  Чат
-                </h3>
-                <div className="h-64 bg-muted/30 rounded-lg flex items-center justify-center">
-                  <p className="text-muted-foreground">Чат загружается...</p>
-                </div>
-              </CardContent>
-            </Card>
+              <div className="lg:col-span-1">
+                <Card className="h-full flex flex-col">
+                  <CardContent className="p-4 flex-1 flex flex-col">
+                    <div className="flex items-center justify-between mb-4 pb-3 border-b border-border">
+                      <h3 className="font-semibold text-lg flex items-center gap-2">
+                        <Icon name="MessageSquare" size={20} className="text-primary" />
+                        Чат стрима
+                      </h3>
+                      <Badge variant="outline" className="gap-1">
+                        <Icon name="Users" size={12} />
+                        {streamer.viewers.toLocaleString()}
+                      </Badge>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto mb-4 space-y-3 min-h-[400px] max-h-[500px]">
+                      {chatMessages.map((msg) => (
+                        <div key={msg.id} className="group hover:bg-muted/30 rounded-lg p-2 transition-colors">
+                          <div className="flex items-start gap-2">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center flex-shrink-0">
+                              <span className="text-xs font-bold text-white">{msg.user[0]}</span>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="font-semibold text-sm truncate">{msg.user}</span>
+                                <span className="text-xs text-muted-foreground">{msg.time}</span>
+                              </div>
+                              <p className="text-sm break-words">{msg.message}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      <div ref={chatEndRef} />
+                    </div>
+
+                    <div className="flex gap-2 pt-3 border-t border-border">
+                      <Input
+                        placeholder="Написать сообщение..."
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        onKeyDown={handleMessageKeyDown}
+                        className="flex-1"
+                      />
+                      <Button 
+                        onClick={handleSendMessage}
+                        className="bg-gradient-to-r from-primary to-secondary hover:opacity-90"
+                      >
+                        <Icon name="Send" size={18} />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
           </TabsContent>
 
           <TabsContent value="clips" className="space-y-6">
