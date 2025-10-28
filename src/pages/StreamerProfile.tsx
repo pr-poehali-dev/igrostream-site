@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import Icon from '@/components/ui/icon';
 
@@ -13,7 +14,10 @@ const StreamerProfile = () => {
   const [isFollowing, setIsFollowing] = useState(false);
   const [followerCount, setFollowerCount] = useState(0);
   const [avatar, setAvatar] = useState('');
+  const [nickname, setNickname] = useState('');
+  const [isEditingNickname, setIsEditingNickname] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const nicknameInputRef = useRef<HTMLInputElement>(null);
 
   const streamerData: Record<string, any> = {
     '1': {
@@ -67,6 +71,10 @@ const StreamerProfile = () => {
     setAvatar(streamer.avatar);
   }
   
+  if (nickname === '') {
+    setNickname(streamer.name);
+  }
+  
   const handleFollowToggle = () => {
     const newFollowState = !isFollowing;
     setIsFollowing(newFollowState);
@@ -92,6 +100,30 @@ const StreamerProfile = () => {
         });
       };
       reader.readAsDataURL(file);
+    }
+  };
+  
+  const handleNicknameEdit = () => {
+    setIsEditingNickname(true);
+    setTimeout(() => nicknameInputRef.current?.focus(), 0);
+  };
+  
+  const handleNicknameSave = () => {
+    if (nickname.trim()) {
+      setIsEditingNickname(false);
+      toast({
+        title: 'Ник обновлён!',
+        description: `Ваш новый ник: ${nickname}`,
+      });
+    }
+  };
+  
+  const handleNicknameKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleNicknameSave();
+    } else if (e.key === 'Escape') {
+      setNickname(streamer.name);
+      setIsEditingNickname(false);
     }
   };
 
@@ -201,7 +233,44 @@ const StreamerProfile = () => {
               <div className="flex-1">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                   <div>
-                    <h1 className="text-3xl md:text-4xl font-bold mb-2">{streamer.name}</h1>
+                    <div className="flex items-center gap-3 mb-2">
+                      {isEditingNickname ? (
+                        <div className="flex items-center gap-2">
+                          <Input
+                            ref={nicknameInputRef}
+                            value={nickname}
+                            onChange={(e) => setNickname(e.target.value)}
+                            onKeyDown={handleNicknameKeyDown}
+                            className="text-3xl md:text-4xl font-bold h-auto py-1 px-2 max-w-md"
+                          />
+                          <Button size="sm" onClick={handleNicknameSave}>
+                            <Icon name="Check" size={18} />
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => {
+                              setNickname(streamer.name);
+                              setIsEditingNickname(false);
+                            }}
+                          >
+                            <Icon name="X" size={18} />
+                          </Button>
+                        </div>
+                      ) : (
+                        <>
+                          <h1 className="text-3xl md:text-4xl font-bold">{nickname}</h1>
+                          <Button 
+                            size="sm" 
+                            variant="ghost"
+                            onClick={handleNicknameEdit}
+                            className="opacity-60 hover:opacity-100"
+                          >
+                            <Icon name="Pencil" size={18} />
+                          </Button>
+                        </>
+                      )}
+                    </div>
                     <p className="text-muted-foreground mb-3">{streamer.bio}</p>
                     <div className="flex flex-wrap gap-2">
                       {streamer.tags.map((tag: string) => (
